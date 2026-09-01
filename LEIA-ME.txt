@@ -1,8 +1,0 @@
-ARQUIVOS MODIFICADOS DO PORTIFÓLIO
-
-Foram alterados somente index.html, script.js e app.js.
-preview.html, style.css e data.js foram preservados sem alterações.
-
-O formulário agora valida o formato do e-mail, verifica o domínio e, depois, tenta salvar os dados na tabela 'contatos' do Supabase.
-
-IMPORTANTE: a verificação de domínio/MX não prova que a caixa postal existe. A confirmação real exige envio de e-mail de verificação.

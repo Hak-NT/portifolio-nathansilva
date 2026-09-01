@@ -752,9 +752,10 @@ const ORDEM_NAVEGACAO = ["work", "skills", "slides", "about"];
 function renderizarNavegacao() {
   const itensNavegacao = ORDEM_NAVEGACAO.map((id) => NAVEGACAO.find((n) => n.id === id)).filter(Boolean);
 
-  const itensDesktop = itensNavegacao
+  const itensMenu = itensNavegacao
     .map((n) => {
       const estaAtiva = emHome() && secaoAtiva === n.id;
+
       return `
       <button data-nav="${n.id}" aria-current="${estaAtiva ? "true" : ""}"
         class="relative rounded-full px-4 py-1.5 text-sm transition-colors ${estaAtiva ? "text-white" : "text-mist hover:text-white"}">
@@ -762,19 +763,6 @@ function renderizarNavegacao() {
         ${ROTULOS_NAVEGACAO[n.id] ?? n.label}
       </button>`;
     })
-    .join("");
-
-  const itensMobile = itensNavegacao
-    .map(
-      (n, i) => `
-      <button data-nav="${n.id}"
-        class="flex w-full items-center justify-between border-b border-white/5 py-3.5 text-left font-display text-lg last:border-0 ${
-          emHome() && secaoAtiva === n.id ? "text-red" : ""
-        }">
-        ${ROTULOS_NAVEGACAO[n.id] ?? n.label}
-        <span class="font-mono text-xs text-mist">0${i + 1}</span>
-      </button>`,
-    )
     .join("");
 
   const themeToggleLabel = modoClaro ? "Ativar tema escuro" : "Ativar tema claro";
@@ -796,7 +784,10 @@ function renderizarNavegacao() {
           <span class="font-display text-sm font-bold ${modoClaro ? "text-[#111111]" : "text-white"}">${PERFIL.name}</span>
         </button>
 
-        <div class="hidden items-center gap-1 md:flex">${itensDesktop}</div><div class="hidden items-center gap-1 md:flex">${itensDesktop}</div>
+        <div class="${menuMovelAberto
+          ? "absolute top-[72px] left-2 right-2 flex flex-col rounded-3xl border border-line bg-black/95 p-3 backdrop-blur-xl md:hidden"
+          : "hidden items-center gap-1 md:flex"
+        }">${itensMenu}</div>
 
         <div class="flex items-center gap-2">
           <button type="button" data-theme-toggle aria-label="${themeToggleLabel}" aria-pressed="${modoClaro}" title="${themeToggleLabel}"
@@ -814,11 +805,6 @@ function renderizarNavegacao() {
         </div>
       </nav>
 
-      ${
-        menuMovelAberto
-          ? `<div class="absolute top-[72px] w-[calc(100%-2rem)] max-w-4xl rounded-3xl border border-line bg-black/95 p-3 backdrop-blur-xl md:hidden">${itensMobile}</div>`
-          : ""
-      }
     </div>`;
 }
 
