@@ -10,6 +10,8 @@
          class from the React components (bg-red, text-mist, border-line,
          font-display, arbitrary values, etc.) resolves identically. -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Cliente oficial do Supabase. A chave usada abaixo é pública. -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -671,6 +673,27 @@ let modoClaro = false;
 let valoresContato = { name: "", email: "", subject: "", message: "" };
 let estadoContato = "idle"; // idle | typing | submitting | success | error
 let errosContato = {};
+
+/* ==================================================================== */
+/* SEÇÃO 3 — CONEXÃO COM O SUPABASE                                    */
+/* A chave publishable identifica o projeto no navegador. Ela não dá   */
+/* acesso aos dados sem permissões e políticas RLS configuradas.       */
+/* ==================================================================== */
+
+const enderecoSupabase = "https://oytbdvvjkmawgqvfpbrb.supabase.co";
+const chavePublicaSupabase = "sb_publishable_VOB67Ia_Sq5tPwaU9WRS1A_9YwwtBb1";
+
+const clienteSupabase = window.supabase.createClient(
+  enderecoSupabase,
+  chavePublicaSupabase,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false,
+    },
+  },
+);
 
 /* SEÇÃO 0 — TEMA (DARK MODE / LIGHT MODE) */
 
