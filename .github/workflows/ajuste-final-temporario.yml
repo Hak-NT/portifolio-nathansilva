@@ -12,42 +12,47 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Corrigir fluxo de confirmacao
+      - name: Localizar fluxo de confirmacao
+        run: |
+          echo '--- FUNCOES RELACIONADAS A CODIGO/CONFIRMACAO ---'
+          grep -n -E 'function .*codigo|function .*confirm|codigoInformado|estadoContato = "submitting"' app.js || true
+      - name: Corrigir estado de confirmacao
         shell: python
         run: |
           from pathlib import Path
-
+          import re
           p = Path('app.js')
           s = p.read_text(encoding='utf-8')
           original = s
 
-          inicio = s.find('function confirmarCodigoVerificacao')
+          # Localiza qualquer funcao cujo nome contenha confirmar ou codigo.
+          padroes = [
+              r'(async\s+)?function\s+\w*(?:confirmar|codigo)\w*\s*\([^)]*\)\s*\{',
+              r'(async\s+)?function\s+\w+\s*\([^)]*codigo[^)]*\)\s*\{',
+          ]
+          inicio = -1
+          assinatura_fim = -1
+          for padrao in padroes:
+              encontrado = re.search(padrao, s, re.I)
+              if encontrado:
+                  inicio = encontrado.start()
+                  assinatura_fim = encontrado.end()
+                  break
+
           if inicio == -1:
-              raise SystemExit('Funcao confirmarCodigoVerificacao nao encontrada.')
+              raise SystemExit('Nenhuma funcao de confirmacao/codigo encontrada.')
 
-          fim = s.find('\n}', inicio)
-          trecho = s[inicio:] if fim == -1 else s[inicio:fim]
+          # Insere o estado no inicio da funcao encontrada.
+          s = s[:assinatura_fim] + '\n  estadoContato = "confirmandoCodigo";' + s[assinatura_fim:]
 
-          marcador = 'estadoContato = "submitting";'
-          posicao = s.find(marcador, inicio)
-          if posicao != -1 and (fim == -1 or posicao < fim):
-              s = s[:posicao] + 'estadoContato = "confirmandoCodigo";' + s[posicao + len(marcador):]
-          else:
-              assinatura_fim = s.find('{', inicio)
-              if assinatura_fim == -1:
-                  raise SystemExit('Assinatura da funcao de confirmacao invalida.')
-              s = s[:assinatura_fim + 1] + '\n  estadoContato = "confirmandoCodigo";' + s[assinatura_fim + 1:]
-
-          if 'estadoContato === "aguardandoCodigo" || estadoContato === "reenviandoCodigo"' in s:
-              s = s.replace(
-                  'estadoContato === "aguardandoCodigo" || estadoContato === "reenviandoCodigo"',
-                  'estadoContato === "aguardandoCodigo" || estadoContato === "reenviandoCodigo" || estadoContato === "confirmandoCodigo"'
-              )
+          s = s.replace(
+              'estadoContato === "aguardandoCodigo" || estadoContato === "reenviandoCodigo"',
+              'estadoContato === "aguardandoCodigo" || estadoContato === "reenviandoCodigo" || estadoContato === "confirmandoCodigo"'
+          )
 
           p.write_text(s, encoding='utf-8')
-
           if s == original:
-              raise SystemExit('Nenhuma alteracao foi aplicada ao app.js.')
+              raise SystemExit('Nenhuma alteracao foi aplicada.')
       - name: Validar JavaScript
         run: node --check app.js
       - name: Commitar e remover workflow
@@ -57,7 +62,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app.js
           git diff --cached --quiet && { echo "Nenhuma alteracao para commitar."; exit 1; }
-          git commit -m "Corrige processamento da confirmacao de codigo"
+          git commit -m "Corrige estado de confirmacao do formulario"
           rm -f .github/workflows/ajuste-final-temporario.yml
           git add -A .github/workflows/ajuste-final-temporario.yml
           git commit -m "Remove workflow temporario de ajuste"
