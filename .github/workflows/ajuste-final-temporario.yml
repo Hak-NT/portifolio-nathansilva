@@ -1,0 +1,61 @@
+name: Ajuste final temporario do app.js
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  corrigir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Corrigir fluxo de confirmacao
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p = Path('app.js')
+          s = p.read_text(encoding='utf-8')
+          original = s
+
+          padrao = r'(async\s+function\s+confirmarCodigoVerificacao\s*\([^)]*\)\s*\{\s*)'
+          s, n = re.subn(padrao, r'\1\n  estadoContato = "confirmandoCodigo";\n', s, count=1)
+
+          s = s.replace(
+              'estadoContato === "aguardandoCodigo" || estadoContato === "reenviandoCodigo"',
+              'estadoContato === "aguardandoCodigo" || estadoContato === "reenviandoCodigo" || estadoContato === "confirmandoCodigo"'
+          )
+
+          s = s.replace(
+              'disabled="${estadoContato === "submitting"}"',
+              'disabled="${estadoContato === "confirmandoCodigo"}"'
+          )
+
+          s = s.replace(
+              'estadoContato === "submitting" ? "Confirmando..."',
+              'estadoContato === "confirmandoCodigo" ? "Confirmando..."'
+          )
+
+          if n == 0:
+              raise SystemExit('Funcao confirmarCodigoVerificacao nao encontrada; arquivo nao foi alterado.')
+          if s == original:
+              raise SystemExit('Nenhuma nova correcao foi aplicada ao app.js.')
+
+          p.write_text(s, encoding='utf-8')
+      - name: Validar JavaScript
+        run: node --check app.js
+      - name: Commitar e remover workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js
+          git diff --cached --quiet && exit 1
+          git commit -m "Corrige processamento do codigo de verificacao"
+          rm -f .github/workflows/ajuste-final-temporario.yml
+          git add -A .github/workflows/ajuste-final-temporario.yml
+          git commit -m "Remove workflow temporario de ajuste"
+          git push
