@@ -11,7 +11,7 @@ let posicaoComparacao = 50; // Posição do controle deslizante de Antes/Depois 
 let emailCopiado = false;
 let modoClaro = false;
 let valoresContato = { name: "", email: "", subject: "", message: "" };
-let estadoContato = "idle"; // idle | typing | submitting | success | error
+let estadoContato = "idle"; // idle | typing | submitting | aguardandoCodigo | reenviandoCodigo | confirmandoCodigo | success | error
 let errosContato = {};
 
 /* SEÇÃO 0 — TEMA (DARK MODE / LIGHT MODE) */
@@ -55,7 +55,6 @@ function irParaSecao(id) {
 
 function abrirProjeto(slug) {
   visao = { name: "project", slug };
-  indiceCarrossel = indiceCarrossel; // no-op, mantido por clareza
   window.scrollTo({ top: 0, behavior: "instant" });
   renderizarApp();
 }
