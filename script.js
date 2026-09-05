@@ -45,3 +45,16 @@ async function verificarDominioEmail(enderecoEmail) {
         return false;
     }
 }
+
+// ============================================
+// SEÇÃO 5.2 — CARREGAR VERIFICAÇÃO DE CONTATO
+// O script é carregado depois que os scripts principais
+// terminaram, garantindo que o formulário já exista.
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const scriptVerificacao = document.createElement('script');
+    scriptVerificacao.src = './contato-verificacao.js';
+    scriptVerificacao.defer = true;
+    document.body.appendChild(scriptVerificacao);
+});
