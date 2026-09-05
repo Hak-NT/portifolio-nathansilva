@@ -58,3 +58,20 @@ document.addEventListener('DOMContentLoaded', () => {
     scriptVerificacao.defer = true;
     document.body.appendChild(scriptVerificacao);
 });
+
+// ============================================
+// SEÇÃO 5.3 — CORREÇÃO DA ABERTURA DE PROJETOS
+// Usa o mesmo nome definido no HTML: data-open-project.
+// ============================================
+
+document.addEventListener('click', (evento) => {
+    const botaoProjeto = evento.target.closest('[data-open-project]');
+
+    if (!botaoProjeto || typeof abrirProjeto !== 'function') {
+        return;
+    }
+
+    evento.preventDefault();
+    evento.stopImmediatePropagation();
+    abrirProjeto(botaoProjeto.dataset.openProject);
+}, true);
