@@ -1,0 +1,90 @@
+name: Ajuste temporario do app.js
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  corrigir-app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositorio
+        uses: actions/checkout@v4
+
+      - name: Aplicar correcoes no app.js
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          caminho = Path("app.js")
+          texto = caminho.read_text(encoding="utf-8")
+          original = texto
+
+          texto = texto.replace(
+              'let estadoContato = "idle"; // idle | typing | submitting | success | error',
+              'let estadoContato = "idle"; // idle | typing | submitting | aguardandoCodigo | reenviandoCodigo | confirmandoCodigo | success | error',
+          )
+
+          texto = texto.replace(
+              '  indiceCarrossel = indiceCarrossel; // no-op, mantido por clareza\n',
+              '',
+          )
+
+          texto = texto.replace(
+              'estadoContato === "aguardandoCodigo" || estadoContato === "reenviandoCodigo"',
+              'estadoContato === "aguardandoCodigo" || estadoContato === "reenviandoCodigo" || estadoContato === "confirmandoCodigo"',
+          )
+
+          bloco_confirmacao = re.compile(
+              r'(const codigoInformado\s*=.*?)(estadoContato\s*=\s*)"submitting";',
+              re.S,
+          )
+          texto, ocorrencias = bloco_confirmacao.subn(
+              lambda m: m.group(1) + m.group(2) + '"confirmandoCodigo";',
+              texto,
+              count=1,
+          )
+
+          texto = texto.replace(
+              'disabled="${estadoContato === "submitting"}"',
+              'disabled="${estadoContato === "confirmandoCodigo"}"',
+          )
+
+          texto = texto.replace(
+              'estadoContato === "submitting" ? "Confirmando..."',
+              'estadoContato === "confirmandoCodigo" ? "Confirmando..."',
+          )
+
+          if texto == original:
+              raise SystemExit("Nenhuma alteracao foi aplicada ao app.js.")
+
+          caminho.write_text(texto, encoding="utf-8")
+          print("Correcoes aplicadas ao app.js.")
+
+      - name: Validar JavaScript
+        run: node --check app.js
+
+      - name: Commitar correcoes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js
+          git diff --cached --quiet && { echo "Nenhuma alteracao para commitar."; exit 0; }
+          git commit -m "Corrige estado de confirmacao do formulario"
+          git push
+
+      - name: Remover workflow temporario
+        shell: bash
+        run: |
+          rm -f .github/workflows/ajuste-temporario.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A .github/workflows/ajuste-temporario.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Remove workflow temporario de ajuste"
+          git push
